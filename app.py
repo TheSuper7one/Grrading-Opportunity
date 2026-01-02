@@ -123,4 +123,9 @@ col2.metric("Avg Raw Price", f"${filtered['raw_price'].mean():.2f}")
 # -----------------------------
 st.subheader("🧾 Card Results")
 
-st.datafra
+st.write(filtered.head())
+st.dataframe(
+    filtered.sort_values("raw_price", ascending=False),
+    use_container_width=True
+)
+
