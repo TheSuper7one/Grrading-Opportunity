@@ -30,7 +30,7 @@ def fetch_cards(page_size=100):
 
     params = {
         "pageSize": page_size,
-        "select": "id,name,set,tcgplayer"
+        "select": "id,name,set.name,tcgplayer.prices"
     }
 
     response = requests.get(
@@ -45,13 +45,14 @@ def fetch_cards(page_size=100):
             f"API Error {response.status_code}: {response.text}"
         )
 
-    cards = response.json().get("data", [])
+    data = response.json().get("data", [])
     rows = []
 
-    for card in cards:
+    for card in data:
         prices = card.get("tcgplayer", {}).get("prices", {})
-        price_data = prices.get("holofoil") or prices.get("normal")
 
+        # Prefer holofoil, then normal
+        price_data = prices.get("holofoil") or prices.get("normal")
         if not price_data:
             continue
 
@@ -82,7 +83,7 @@ with st.spinner("Fetching Pokémon card prices..."):
         st.stop()
 
 if df.empty:
-    st.warning("No card pricing data returned.")
+    st.warning("No pricing data returned.")
     st.stop()
 
 # -----------------------------------
@@ -90,11 +91,9 @@ if df.empty:
 # -----------------------------------
 st.sidebar.header("🔍 Filters")
 
-sets = sorted(df["set"].unique())
-
 selected_sets = st.sidebar.multiselect(
     "Pokémon Set",
-    options=sets
+    options=sorted(df["set"].unique())
 )
 
 max_raw_price = st.sidebar.slider(
@@ -132,7 +131,6 @@ filtered["roi_percent"] = None
 st.subheader("📊 Results Overview")
 
 col1, col2 = st.columns(2)
-
 col1.metric("Cards Found", len(filtered))
 col2.metric(
     "Average Raw Price",
